@@ -20,36 +20,40 @@ const AuthForm = () => {
     const password = passwordRef.current.value;
 
     setIsLoading(true);
+    let url;
     if (isLogin) {
+      url = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${API_KEY}`;
     } else {
-      fetch(
-        `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${API_KEY}`,
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            email,
-            password,
-            returnSecureToken: true,
-          }),
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      ).then((res) => {
+      url = `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${API_KEY}`;
+    }
+    fetch(url, {
+      method: "POST",
+      body: JSON.stringify({
+        email,
+        password,
+        returnSecureToken: true,
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => {
         setIsLoading(false);
         if (res.ok) {
-          //do something
+          return res.json();
         } else {
           res.json().then((data) => {
-            let errorMessage = "Authentication failed";
-            if (data.error.message) {
-              errorMessage = data.error.message;
-            }
-            alert(errorMessage);
+            const errorMessage = "Authentication failed";
+            throw new Error(errorMessage);
           });
         }
+      })
+      .then((data) => {
+        console.log(data)
+      })
+      .catch((err) => {
+        alert(err.message);
       });
-    }
   };
 
   return (
@@ -65,7 +69,9 @@ const AuthForm = () => {
           <input type="password" id="password" required ref={passwordRef} />
         </div>
         <div className={classes.actions}>
-          {!isLoading && <button>{isLogin ? "Login" : "Create Account"}</button>}
+          {!isLoading && (
+            <button>{isLogin ? "Login" : "Create Account"}</button>
+          )}
           {isLoading && <p>Loading...</p>}
           <button
             type="button"
